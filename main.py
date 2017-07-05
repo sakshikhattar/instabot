@@ -10,6 +10,28 @@ APP_ACCESS_TOKEN = '1408840836.24852af.7b742b11b27445bd95aa824ebc150881'
 BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API endpoints
 
 
+def download_user_image(insta_username):
+    media_id = get_post_id(insta_username)
+    request_url = (BASE_URL + 'media/%s/?access_token=%s') % (media_id, APP_ACCESS_TOKEN)
+    print 'GET request url : %s' % (request_url)
+    user_media = requests.get(request_url).json()
+    print user_media
+    if user_media['meta']['code'] == 200:
+        if len(user_media['data']):
+            if user_media['data']['type'] == "image":
+                image_name = user_media['data']['id'] + '.jpeg'
+                image_url = user_media['data']['images']['standard_resolution']['url']
+                urllib.urlretrieve(image_url, image_name)
+                print 'Your image has been downloaded!'
+            else:
+                print 'The post is not an image'
+    else:
+        print 'Status code other than 200 received!'
+
+
+
+
+
 #method to delete the negative comments using TextBlob library
 def delete_negative_comment(insta_username):
     media_id = get_post_id(insta_username)
@@ -104,12 +126,8 @@ def get_user_post(insta_username):
         if len(user_post['data']):
             status = user_post['data'][0]['caption']['text']
             print status
-            image_name = user_post['data'][0]['id'] + '.jpeg'
-            image_url = user_post['data'][0]['images']['standard_resolution']['url']
-            urllib.urlretrieve(image_url, image_name)
-            print 'Your image has been downloaded!'
         else:
-            print 'Post does not exist!'
+            print 'post does not exist'
     else:
         print 'Status code other than 200 received!'
 
@@ -200,6 +218,7 @@ def start_app():
         print '5.Like post of a user\n'
         print '6.Comment on the post of a user\n'
         print '7.Delete negative comments\n'
+        print '8.Download the post of a user\n'
         choice = int(raw_input('Enter you choice: '))
         if choice == 1:
             self_info()
@@ -220,6 +239,10 @@ def start_app():
         elif choice == 7:
             insta_username = raw_input('Enter the username of the user: ')
             delete_negative_comment(insta_username)
+        elif choice == 8:
+            insta_username = raw_input('Enter the username of the user: ')
+            download_user_image(insta_username)
+
         else:
             print "wrong choice"
             show_menu = False
