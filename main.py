@@ -9,7 +9,37 @@ APP_ACCESS_TOKEN = '1408840836.24852af.7b742b11b27445bd95aa824ebc150881'
 
 BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API endpoints
 
+#list to store hashtags from all the post required
+hashtag_list = []
 
+
+#method to get the hashtags from all the post of a user
+def get_hashtags(insta_username):
+    user_id = get_user_id(insta_username)
+    if user_id == None:
+        print 'User does not exist!'
+        exit()
+    request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+    print 'GET request url : %s' % (request_url)
+    user_media = requests.get(request_url).json()
+
+    if user_media['meta']['code'] == 200:
+        if len(user_media['data']):
+            for x in range(0, len(user_media['data'])):
+                hashtags = user_media['data'][x]['tags']
+                print hashtags
+                hashtag_list.append(hashtags)
+        else:
+            print 'No post found.'
+            exit()
+    else:
+        print 'Status code other than 200 received!'
+        exit()
+
+
+
+
+#method to download image of a user
 def download_user_image(insta_username):
     media_id = get_post_id(insta_username)
     request_url = (BASE_URL + 'media/%s/?access_token=%s') % (media_id, APP_ACCESS_TOKEN)
@@ -21,7 +51,7 @@ def download_user_image(insta_username):
             if user_media['data']['type'] == "image":
                 image_name = user_media['data']['id'] + '.jpeg'
                 image_url = user_media['data']['images']['standard_resolution']['url']
-                urllib.urlretrieve(image_url, image_name)
+                urllib.urlretrieve(image_url, image_name)     #using urllib library for downloading the image
                 print 'Your image has been downloaded!'
             else:
                 print 'The post is not an image'
@@ -142,10 +172,13 @@ def get_own_post():
         if len(my_post['data']):
             status = my_post['data'][1]['caption']['text']
             print status
-            image_name = my_post['data'][1]['id'] + '.jpeg'
-            image_url = my_post['data'][1]['images']['standard_resolution']['url']
-            urllib.urlretrieve(image_url, image_name)
-            print 'Your image has been downloaded!'
+            if my_post['data'][1]['type'] == "image":
+                image_name = my_post['data'][1]['id'] + '.jpeg'
+                image_url = my_post['data'][1]['images']['standard_resolution']['url']
+                urllib.urlretrieve(image_url, image_name)
+                print 'Your image has been downloaded!'
+            else:
+                print 'The post is not an image'
         else:
             print 'Post does not exist!'
     else:
