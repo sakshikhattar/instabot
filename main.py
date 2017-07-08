@@ -1,5 +1,4 @@
-import requests
-import urllib
+import requests, urllib
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 
@@ -11,7 +10,22 @@ BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API end
 
 #list to store hashtags from all the post required
 hashtag_list = []
+keywords_list = []
 
+
+def get_keyword():
+    if len(hashtag_list):
+        for x in range(0, len(hashtag_list)):
+            hashtag = hashtag_list[x]
+            apikey = 'lBzto9IhYQnI8Z6kd4dFap0gGbFexBgRBknxuISGFK4'
+            request_url = ('https://apis.paralleldots.com/keywords?q=%s&apikey=%s') % (hashtag, apikey)
+            print 'POST request url : %s' % (request_url)
+            keywords = requests.post(request_url, verify=False).json()
+            keywords_list.append(keywords)
+            print len(keywords_list)
+
+    else:
+        print 'hashtag list empty!!'
 
 #method to get the hashtags from all the post of a user
 def get_hashtags(insta_username):
@@ -27,7 +41,6 @@ def get_hashtags(insta_username):
         if len(user_media['data']):
             for x in range(0, len(user_media['data'])):
                 hashtags = user_media['data'][x]['tags']
-                print hashtags
                 hashtag_list.append(hashtags)
         else:
             print 'No post found.'
@@ -275,6 +288,11 @@ def start_app():
         elif choice == 8:
             insta_username = raw_input('Enter the username of the user: ')
             download_user_image(insta_username)
+        elif choice == 9:
+            insta_username = raw_input('enter the username of the user: ')
+            get_hashtags(insta_username)
+        elif choice == 10:
+            get_keyword()
 
         else:
             print "wrong choice"
