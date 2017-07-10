@@ -1,6 +1,11 @@
 import requests, urllib
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
+import unirest
+from wordcloud import WordCloud, STOPWORDS
+import matplotlib.pyplot as plt
+
+
 
 APP_ACCESS_TOKEN = '1408840836.24852af.7b742b11b27445bd95aa824ebc150881'
 #Token Owner : khattarsakshi
@@ -8,9 +13,41 @@ APP_ACCESS_TOKEN = '1408840836.24852af.7b742b11b27445bd95aa824ebc150881'
 
 BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API endpoints
 
+
 #list to store hashtags from all the post required
 hashtag_list = []
 keywords_list = []
+text_list = []
+
+
+def generate_wordcloud():
+    with open('key.txt', 'r') as myfile:
+        data = myfile.read()
+    wordcloud = WordCloud(
+                              stopwords=STOPWORDS,
+                              background_color='white',
+                              width=1200,
+                              height=1000
+                          ).generate(data)
+
+    plt.imshow(wordcloud)
+    plt.axis('off')
+    plt.show()
+
+
+def classify_text():
+        with open('taglist.txt', 'r') as myfile:
+            text = myfile.read()
+
+        response = unirest.post("https://paralleldots-text-analysis-v1.p.mashape.com/taxonomy",
+                                headers={
+                                    "X-Mashape-Key": "W628V3kJhHmshBhxGygTW8IfCTsUp1ViHFcjsnKq8k9lNRwFR7",
+                                    "Content-Type": "application/json"
+                                        },
+                                params=("{\"sentence1\":\"text\",\"apikey\":\"lBzto9IhYQnI8Z6kd4dFap0gGbFexBgRBknxuISGFK4\"}")
+                                )
+
+        print response.body
 
 
 def get_keyword():
@@ -23,6 +60,9 @@ def get_keyword():
             keywords = requests.post(request_url, verify=False).json()
             keywords_list.append(keywords)
             print len(keywords_list)
+        thefile = open('key.txt', 'w')
+        for item in keywords_list:
+            print>> thefile, item
 
     else:
         print 'hashtag list empty!!'
@@ -42,6 +82,9 @@ def get_hashtags(insta_username):
             for x in range(0, len(user_media['data'])):
                 hashtags = user_media['data'][x]['tags']
                 hashtag_list.append(hashtags)
+            thefile = open('taglist.txt', 'w')
+            for item in hashtag_list:
+                print>> thefile, item
         else:
             print 'No post found.'
             exit()
@@ -293,7 +336,10 @@ def start_app():
             get_hashtags(insta_username)
         elif choice == 10:
             get_keyword()
-
+        elif choice == 11:
+            generate_wordcloud()
+        elif choice == 12:
+            classify_text()
         else:
             print "wrong choice"
             show_menu = False
