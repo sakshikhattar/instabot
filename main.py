@@ -1,7 +1,6 @@
 import requests, urllib
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
-import unirest
 from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
 
@@ -16,56 +15,28 @@ BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API end
 
 #list to store hashtags from all the post required
 hashtag_list = []
-keywords_list = []
+
 text_list = []
 
-
+#function to generate wordcloud
 def generate_wordcloud():
-    with open('key.txt', 'r') as myfile:
-        data = myfile.read()
-    wordcloud = WordCloud(
-                              stopwords=STOPWORDS,
-                              background_color='white',
-                              width=1200,
-                              height=1000
-                          ).generate(data)
-
-    plt.imshow(wordcloud)
-    plt.axis('off')
-    plt.show()
-
-
-def classify_text():
-        with open('taglist.txt', 'r') as myfile:
-            text = myfile.read()
-
-        response = unirest.post("https://paralleldots-text-analysis-v1.p.mashape.com/taxonomy",
-                                headers={
-                                    "X-Mashape-Key": "W628V3kJhHmshBhxGygTW8IfCTsUp1ViHFcjsnKq8k9lNRwFR7",
-                                    "Content-Type": "application/json"
-                                        },
-                                params=("{\"sentence1\":\"text\",\"apikey\":\"lBzto9IhYQnI8Z6kd4dFap0gGbFexBgRBknxuISGFK4\"}")
-                                )
-
-        print response.body
-
-
-def get_keyword():
     if len(hashtag_list):
-        for x in range(0, len(hashtag_list)):
-            hashtag = hashtag_list[x]
-            apikey = 'lBzto9IhYQnI8Z6kd4dFap0gGbFexBgRBknxuISGFK4'
-            request_url = ('https://apis.paralleldots.com/keywords?q=%s&apikey=%s') % (hashtag, apikey)
-            print 'POST request url : %s' % (request_url)
-            keywords = requests.post(request_url, verify=False).json()
-            keywords_list.append(keywords)
-            print len(keywords_list)
-        thefile = open('key.txt', 'w')
-        for item in keywords_list:
-            print>> thefile, item
-
+        for y in range(0, len(hashtag_list)):
+            tags = " ".join(hashtag_list[y])
+            text_list.append(tags)
+        main = " ".join(text_list)
+        wordcloud = WordCloud(
+                                  stopwords=STOPWORDS,
+                                  background_color='white',
+                                  width=1200,
+                                  height=1000
+                              ).generate(main)
+        plt.imshow(wordcloud)
+        plt.axis('off')
+        plt.show()
     else:
-        print 'hashtag list empty!!'
+        print 'No elements in hashtag list!!'
+
 
 #method to get the hashtags from all the post of a user
 def get_hashtags(insta_username):
@@ -82,17 +53,12 @@ def get_hashtags(insta_username):
             for x in range(0, len(user_media['data'])):
                 hashtags = user_media['data'][x]['tags']
                 hashtag_list.append(hashtags)
-            thefile = open('taglist.txt', 'w')
-            for item in hashtag_list:
-                print>> thefile, item
         else:
             print 'No post found.'
             exit()
     else:
         print 'Status code other than 200 received!'
         exit()
-
-
 
 
 #method to download image of a user
@@ -113,8 +79,6 @@ def download_user_image(insta_username):
                 print 'The post is not an image'
     else:
         print 'Status code other than 200 received!'
-
-
 
 
 
@@ -308,7 +272,9 @@ def start_app():
         print '6.Comment on the post of a user\n'
         print '7.Delete negative comments\n'
         print '8.Download the post of a user\n'
-        choice = int(raw_input('Enter you choice: '))
+        print '9.Get the hashtags of all the post of a user\n'
+        print '10.Generate the wordcloud\n'
+        choice = int(raw_input('Enter your choice: '))
         if choice == 1:
             self_info()
         elif choice == 2:
@@ -335,11 +301,7 @@ def start_app():
             insta_username = raw_input('enter the username of the user: ')
             get_hashtags(insta_username)
         elif choice == 10:
-            get_keyword()
-        elif choice == 11:
             generate_wordcloud()
-        elif choice == 12:
-            classify_text()
         else:
             print "wrong choice"
             show_menu = False
