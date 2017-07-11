@@ -1,8 +1,10 @@
-import requests, urllib
+import requests
+import urllib
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
+from termcolor import colored
 
 
 
@@ -59,6 +61,28 @@ def get_hashtags(insta_username):
     else:
         print 'Status code other than 200 received!'
         exit()
+
+# Function to get the recent post liked by the user
+
+def recently_liked_media():
+    request_url = (BASE_URL + 'users/self/media/liked?access_token=%s') % (APP_ACCESS_TOKEN)
+    print 'GET request url : %s' % (request_url)
+    own_media = requests.get(request_url).json()
+    print own_media
+
+    if own_media['meta']['code'] == 200:
+        if len(own_media['data']):
+            liked_media_id = own_media['data'][0]['id']
+            print liked_media_id
+
+            image_name = own_media['data'][0]['id'] + '.jpeg'
+            image_url = own_media['data'][0]['images']['standard_resolution']['url']
+            urllib.urlretrieve(image_url, image_name)
+            print 'Recently liked media is downloaded successfully'
+        else:
+            print 'Post does not exit!!'
+    else:
+        print 'Status code other than 200 recieved!!!'
 
 
 #method to download image of a user
@@ -262,8 +286,8 @@ def get_user_info(insta_username):
 def start_app():
     show_menu = True
     while show_menu:
-        print 'Hey! Welcome to instaBot!'
-        print 'What do you want to do?'
+        print colored('Hey! Welcome to instaBot!', 'blue')
+        print colored('What do you want to do?', 'cyan')
         print '1.Get your own details\n'
         print '2.Get details of a user\n'
         print '3.Get your own post\n'
@@ -274,6 +298,7 @@ def start_app():
         print '8.Download the post of a user\n'
         print '9.Get the hashtags of all the post of a user\n'
         print '10.Generate the wordcloud\n'
+        print '11.Get the recent post liked by the user\n'
         choice = int(raw_input('Enter your choice: '))
         if choice == 1:
             self_info()
@@ -302,6 +327,8 @@ def start_app():
             get_hashtags(insta_username)
         elif choice == 10:
             generate_wordcloud()
+        elif choice == 11:
+            recently_liked_media()
         else:
             print "wrong choice"
             show_menu = False
