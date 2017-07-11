@@ -19,6 +19,11 @@ BASE_URL = 'https://api.instagram.com/v1/' #common for all the Instagram API end
 hashtag_list = []
 
 text_list = []
+comment_list = []
+sentiment_list = []
+positive_comment = []
+negative_comment = []
+
 
 #function to generate wordcloud
 def generate_wordcloud():
@@ -27,6 +32,7 @@ def generate_wordcloud():
             tags = " ".join(hashtag_list[y])
             text_list.append(tags)
         main = " ".join(text_list)
+
         wordcloud = WordCloud(
                                   stopwords=STOPWORDS,
                                   background_color='white',
@@ -36,9 +42,6 @@ def generate_wordcloud():
         plt.imshow(wordcloud)
         plt.axis('off')
         plt.show()
-    else:
-        print 'No elements in hashtag list!!'
-
 
 #method to get the hashtags from all the post of a user
 def get_hashtags(insta_username):
@@ -165,6 +168,56 @@ def like_a_post(insta_username):
     else:
         print 'Your like was unsuccessful. Try again!'
 
+def get_comments(insta_username):
+    media_id = get_post_id(insta_username)
+    request_url = (BASE_URL + 'media/%s/comments?access_token=%s') % (media_id, APP_ACCESS_TOKEN)
+    comments = requests.get(request_url).json()
+    print len(comments['data'])
+    print comments['data']
+    for z in range(0, len(comments['data'])):
+        comments_on_post = comments['data'][z]['text']
+        comment_list.append(comments_on_post)
+
+def sentiment_analysis():
+    if len(comment_list):
+        for x in range(0, len(comment_list)):
+            comment = comment_list[x]
+            apikey = 'lBzto9IhYQnI8Z6kd4dFap0gGbFexBgRBknxuISGFK4'
+            request_url = ('https://apis.paralleldots.com/sentiment?sentence1=%s&apikey=%s') % (comment, apikey)
+            sentiment = requests.get(request_url, verify=False)
+            sentiment_list.append(sentiment.json())
+        print sentiment_list
+        for i in range(0, len(sentiment_list)):
+            if sentiment_list[i]['sentiment'] >= 0.5000000000000000:
+                print 'positive comment'
+                positive_comment.append(sentiment_list[i])
+            else:
+                print 'negative comment'
+                negative_comment.append(sentiment_list[i])
+        x = len(positive_comment)
+        y = len(negative_comment)
+
+        total = len(comment_list)
+        a = float(x)*100 / total
+        b = float(y)*100 / total
+
+        labels = 'positive_comments', 'negative_comments'
+        sizes = [a,b]
+        colors = ['red', 'lightskyblue']
+        explode = (0.2, 0)       #explodes the first slice
+
+        plt.pie(sizes, explode = explode, labels = labels, colors = colors, autopct = '%1.1f%%',
+                shadow= True, startangle= 140)
+        plt.axis('equal')
+        plt.title('Sentiment analysis')
+        plt.show()
+
+    else:
+        print 'comment list empty!!'
+
+
+
+
 
 #method to get the id of a post
 def get_post_id(insta_username):
@@ -178,7 +231,7 @@ def get_post_id(insta_username):
 
     if user_media['meta']['code'] == 200:
         if len(user_media['data']):
-            return user_media['data'][0]['id']
+            return user_media['data'][2]['id']
         else:
             print 'There is no recent post of the user!'
             exit()
@@ -299,6 +352,7 @@ def start_app():
         print '9.Get the hashtags of all the post of a user\n'
         print '10.Generate the wordcloud\n'
         print '11.Get the recent post liked by the user\n'
+        print '12.Plot a pie chart by comparing positive and negative comments on a post of a user\n'
         choice = int(raw_input('Enter your choice: '))
         if choice == 1:
             self_info()
@@ -329,6 +383,11 @@ def start_app():
             generate_wordcloud()
         elif choice == 11:
             recently_liked_media()
+        elif choice == 12:
+            insta_username = raw_input('enter the username of the user: ')
+            get_comments(insta_username)
+            sentiment_analysis()
+
         else:
             print "wrong choice"
             show_menu = False
